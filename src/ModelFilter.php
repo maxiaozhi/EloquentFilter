@@ -289,7 +289,7 @@ abstract class ModelFilter
      */
     public function callRelatedLocalSetup($related, $query)
     {
-        if (method_exists($this, $method = Str::camel($related).'Setup')) {
+        if (method_exists($this, $method = Str::camel($related) . 'Setup')) {
             $this->{$method}($query);
         }
     }
@@ -415,6 +415,12 @@ abstract class ModelFilter
     public function filterUnjoinedRelation($related)
     {
         $this->query->whereHas($related, function ($q) use ($related) {
+            // Determine whether the associated model has introduced the Filterable trait
+            $modelUseTraits = class_uses($q->getModel());
+            if (!isset($modelUseTraits[Filterable::class])) {
+                return $q;
+            }
+
             $this->callRelatedLocalSetup($related, $q);
 
             // If we defined it locally then we're running the closure on the related model here right.
